@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現在地確認チェックシート</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;}
+.container{background:white;border-radius:20px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:1200px;width:100%;}
+h1{text-align:center;color:#333;margin-bottom:10px;font-size:28px;}
+.subtitle{text-align:center;color:#666;margin-bottom:30px;font-size:14px;}
+.content{display:flex;gap:40px;align-items:center;}
+.controls{flex:1;min-width:300px;}
+.control-group{margin-bottom:25px;}
+.control-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:16px;font-weight:bold;color:#333;}
+.control-value{color:#667eea;font-size:20px;}
+input[type="range"]{width:100%;height:8px;border-radius:5px;background:#ddd;outline:none;-webkit-appearance:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#667eea;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.2);}
+input[type="range"]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#667eea;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.2);border:none;}
+.total-score{text-align:center;margin-top:20px;padding:15px;background:#f5f7ff;border-radius:10px;}
+.total-score-label{font-size:14px;color:#666;margin-bottom:5px;}
+.total-score-value{font-size:32px;font-weight:bold;color:#667eea;}
+.chart-container{flex:1;display:flex;justify-content:center;align-items:center;min-width:550px;}
+canvas{max-width:100%;height:auto;}
+.buttons{margin-top:30px;display:flex;gap:15px;justify-content:center;}
+button{padding:12px 30px;font-size:16px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;transition:all 0.3s;}
+.btn-download{background:#667eea;color:white;}
+.btn-download:hover{background:#5568d3;transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.4);}
+.btn-reset{background:#e0e0e0;color:#333;}
+.btn-reset:hover{background:#d0d0d0;transform:translateY(-2px);}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>現在地確認チェックシート</h1>
+<p class="subtitle">各項目を10点満点で評価してください</p>
+<div class="content">
+<div class="controls">
+<div class="control-group">
+<div class="control-label"><span>①自己理解</span><span class="control-value"><span id="v1">4</span>/10</span></div>
+<input type="range" id="s1" min="0" max="10" value="4" step="2">
+</div>
+<div class="control-group">
+<div class="control-label"><span>②ゴール設定</span><span class="control-value"><span id="v2">4</span>/10</span></div>
+<input type="range" id="s2" min="0" max="10" value="4" step="2">
+</div>
+<div class="control-group">
+<div class="control-label"><span>③アクションプラン</span><span class="control-value"><span id="v3">4</span>/10</span></div>
+<input type="range" id="s3" min="0" max="10" value="4" step="2">
+</div>
+<div class="total-score">
+<div class="total-score-label">合計スコア</div>
+<div class="total-score-value"><span id="total">12</span>/30</div>
+</div>
+</div>
+<div class="chart-container">
+<canvas id="chart" width="750" height="750"></canvas>
+</div>
+</div>
+<div class="buttons">
+<button class="btn-download" onclick="save()">チャートを画像保存</button>
+<button class="btn-reset" onclick="reset()">リセット</button>
+</div>
+</div>
+<script>
+const c=document.getElementById('chart');
+const ctx=c.getContext('2d');
+const s1=document.getElementById('s1');
+const s2=document.getElementById('s2');
+const s3=document.getElementById('s3');
+
+function draw(){
+const v1=parseInt(s1.value);
+const v2=parseInt(s2.value);
+const v3=parseInt(s3.value);
+document.getElementById('v1').textContent=v1;
+document.getElementById('v2').textContent=v2;
+document.getElementById('v3').textContent=v3;
+document.getElementById('total').textContent=v1+v2+v3;
+
+ctx.clearRect(0,0,c.width,c.height);
+const cx=340,cy=375,r=240;
+
+// Triangle vertices
+const v=[
+{x:cx,y:cy-r,l:'①自己理解'},
+{x:cx-r*0.866,y:cy+r*0.5,l:'②ゴール設定'},
+{x:cx+r*0.866,y:cy+r*0.5,l:'③アクションプラン'}
+];
+
+// Grid (0,2,4,6,8,10)
+ctx.strokeStyle='#ddd';
+ctx.lineWidth=1;
+for(let i=0;i<=10;i+=2){
+const sc=i/10;
+ctx.beginPath();
+for(let j=0;j<3;j++){
+const x=cx+(v[j].x-cx)*sc;
+const y=cy+(v[j].y-cy)*sc;
+if(j==0)ctx.moveTo(x,y);
+else ctx.lineTo(x,y);
+}
+ctx.closePath();
+ctx.stroke();
+}
+
+// Axes
+ctx.strokeStyle='#ccc';
+v.forEach(vt=>{
+ctx.beginPath();
+ctx.moveTo(cx,cy);
+ctx.lineTo(vt.x,vt.y);
+ctx.stroke();
+});
+
+// Outer triangle
+ctx.strokeStyle='#333';
+ctx.lineWidth=2;
+ctx.beginPath();
+v.forEach((vt,i)=>{
+if(i==0)ctx.moveTo(vt.x,vt.y);
+else ctx.lineTo(vt.x,vt.y);
+});
+ctx.closePath();
+ctx.stroke();
+
+// Scale numbers (2,4,6,8)
+ctx.fillStyle='#888';
+ctx.font='14px sans-serif';
+for(let i=2;i<=8;i+=2){
+const sc=i/10;
+// Top axis
+let x=cx+(v[0].x-cx)*sc;
+let y=cy+(v[0].y-cy)*sc;
+ctx.textAlign='right';
+ctx.textBaseline='middle';
+ctx.fillText(i,x-12,y);
+
+// Left axis
+x=cx+(v[1].x-cx)*sc;
+y=cy+(v[1].y-cy)*sc;
+ctx.textAlign='center';
+ctx.textBaseline='top';
+ctx.fillText(i,x-10,y+8);
+
+// Right axis
+x=cx+(v[2].x-cx)*sc;
+y=cy+(v[2].y-cy)*sc;
+ctx.textAlign='center';
+ctx.textBaseline='top';
+ctx.fillText(i,x+10,y+8);
+}
+
+// Plot - USE SAME FORMULA AS GRID
+const p=[
+{x:cx+(v[0].x-cx)*(v1/10),y:cy+(v[0].y-cy)*(v1/10)},
+{x:cx+(v[1].x-cx)*(v2/10),y:cy+(v[1].y-cy)*(v2/10)},
+{x:cx+(v[2].x-cx)*(v3/10),y:cy+(v[2].y-cy)*(v3/10)}
+];
+
+// Fill
+ctx.fillStyle='rgba(102,126,234,0.3)';
+ctx.beginPath();
+p.forEach((pt,i)=>{
+if(i==0)ctx.moveTo(pt.x,pt.y);
+else ctx.lineTo(pt.x,pt.y);
+});
+ctx.closePath();
+ctx.fill();
+
+// Stroke
+ctx.strokeStyle='#667eea';
+ctx.lineWidth=3;
+ctx.beginPath();
+p.forEach((pt,i)=>{
+if(i==0)ctx.moveTo(pt.x,pt.y);
+else ctx.lineTo(pt.x,pt.y);
+});
+ctx.closePath();
+ctx.stroke();
+
+// Points
+ctx.fillStyle='#667eea';
+p.forEach(pt=>{
+ctx.beginPath();
+ctx.arc(pt.x,pt.y,6,0,Math.PI*2);
+ctx.fill();
+});
+
+// Labels
+ctx.fillStyle='#333';
+ctx.font='bold 18px sans-serif';
+// ①自己理解 (top) - center
+ctx.textAlign='center';
+ctx.fillText(v[0].l,v[0].x,v[0].y-50);
+// ②ゴール設定 (bottom-left) - right align
+ctx.textAlign='right';
+ctx.fillText(v[1].l,v[1].x,v[1].y+55);
+// ③アクションプラン (bottom-right) - left align
+ctx.textAlign='left';
+ctx.fillText(v[2].l,v[2].x-80,v[2].y+55);
+}
+
+function save(){
+const a=document.createElement('a');
+a.download='現在地確認チェックシート.png';
+a.href=c.toDataURL();
+a.click();
+}
+
+function reset(){
+s1.value=4;
+s2.value=4;
+s3.value=4;
+draw();
+}
+
+s1.addEventListener('input',draw);
+s2.addEventListener('input',draw);
+s3.addEventListener('input',draw);
+draw();
+</script>
+</body>
+</html>
