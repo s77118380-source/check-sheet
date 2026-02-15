@@ -29,6 +29,7 @@ button{padding:12px 30px;font-size:16px;border:none;border-radius:8px;cursor:poi
 .btn-download:hover{background:#5568d3;transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.4);}
 .btn-reset{background:#e0e0e0;color:#333;}
 .btn-reset:hover{background:#d0d0d0;transform:translateY(-2px);}
+@media(max-width:768px){.content{flex-direction:column;}.chart-container{min-width:auto;width:100%;}}
 </style>
 </head>
 <body>
@@ -69,7 +70,6 @@ const ctx=c.getContext('2d');
 const s1=document.getElementById('s1');
 const s2=document.getElementById('s2');
 const s3=document.getElementById('s3');
-
 function draw(){
 const v1=parseInt(s1.value);
 const v2=parseInt(s2.value);
@@ -78,18 +78,13 @@ document.getElementById('v1').textContent=v1;
 document.getElementById('v2').textContent=v2;
 document.getElementById('v3').textContent=v3;
 document.getElementById('total').textContent=v1+v2+v3;
-
 ctx.clearRect(0,0,c.width,c.height);
 const cx=340,cy=375,r=240;
-
-// Triangle vertices
 const v=[
 {x:cx,y:cy-r,l:'①自己理解'},
 {x:cx-r*0.866,y:cy+r*0.5,l:'②ゴール設定'},
 {x:cx+r*0.866,y:cy+r*0.5,l:'③アクションプラン'}
 ];
-
-// Grid (0,2,4,6,8,10)
 ctx.strokeStyle='#ddd';
 ctx.lineWidth=1;
 for(let i=0;i<=10;i+=2){
@@ -104,8 +99,6 @@ else ctx.lineTo(x,y);
 ctx.closePath();
 ctx.stroke();
 }
-
-// Axes
 ctx.strokeStyle='#ccc';
 v.forEach(vt=>{
 ctx.beginPath();
@@ -113,8 +106,6 @@ ctx.moveTo(cx,cy);
 ctx.lineTo(vt.x,vt.y);
 ctx.stroke();
 });
-
-// Outer triangle
 ctx.strokeStyle='#333';
 ctx.lineWidth=2;
 ctx.beginPath();
@@ -124,42 +115,31 @@ else ctx.lineTo(vt.x,vt.y);
 });
 ctx.closePath();
 ctx.stroke();
-
-// Scale numbers (2,4,6,8)
 ctx.fillStyle='#888';
 ctx.font='14px sans-serif';
 for(let i=2;i<=8;i+=2){
 const sc=i/10;
-// Top axis
 let x=cx+(v[0].x-cx)*sc;
 let y=cy+(v[0].y-cy)*sc;
 ctx.textAlign='right';
 ctx.textBaseline='middle';
 ctx.fillText(i,x-12,y);
-
-// Left axis
 x=cx+(v[1].x-cx)*sc;
 y=cy+(v[1].y-cy)*sc;
 ctx.textAlign='center';
 ctx.textBaseline='top';
 ctx.fillText(i,x-10,y+8);
-
-// Right axis
 x=cx+(v[2].x-cx)*sc;
 y=cy+(v[2].y-cy)*sc;
 ctx.textAlign='center';
 ctx.textBaseline='top';
 ctx.fillText(i,x+10,y+8);
 }
-
-// Plot - USE SAME FORMULA AS GRID
 const p=[
 {x:cx+(v[0].x-cx)*(v1/10),y:cy+(v[0].y-cy)*(v1/10)},
 {x:cx+(v[1].x-cx)*(v2/10),y:cy+(v[1].y-cy)*(v2/10)},
 {x:cx+(v[2].x-cx)*(v3/10),y:cy+(v[2].y-cy)*(v3/10)}
 ];
-
-// Fill
 ctx.fillStyle='rgba(102,126,234,0.3)';
 ctx.beginPath();
 p.forEach((pt,i)=>{
@@ -168,8 +148,6 @@ else ctx.lineTo(pt.x,pt.y);
 });
 ctx.closePath();
 ctx.fill();
-
-// Stroke
 ctx.strokeStyle='#667eea';
 ctx.lineWidth=3;
 ctx.beginPath();
@@ -179,43 +157,33 @@ else ctx.lineTo(pt.x,pt.y);
 });
 ctx.closePath();
 ctx.stroke();
-
-// Points
 ctx.fillStyle='#667eea';
 p.forEach(pt=>{
 ctx.beginPath();
 ctx.arc(pt.x,pt.y,6,0,Math.PI*2);
 ctx.fill();
 });
-
-// Labels
 ctx.fillStyle='#333';
 ctx.font='bold 18px sans-serif';
-// ①自己理解 (top) - center
 ctx.textAlign='center';
 ctx.fillText(v[0].l,v[0].x,v[0].y-50);
-// ②ゴール設定 (bottom-left) - right align
 ctx.textAlign='right';
 ctx.fillText(v[1].l,v[1].x,v[1].y+55);
-// ③アクションプラン (bottom-right) - left align
 ctx.textAlign='left';
 ctx.fillText(v[2].l,v[2].x-80,v[2].y+55);
 }
-
 function save(){
 const a=document.createElement('a');
 a.download='現在地確認チェックシート.png';
 a.href=c.toDataURL();
 a.click();
 }
-
 function reset(){
 s1.value=4;
 s2.value=4;
 s3.value=4;
 draw();
 }
-
 s1.addEventListener('input',draw);
 s2.addEventListener('input',draw);
 s3.addEventListener('input',draw);
